@@ -146,6 +146,11 @@ async def score_batch(payload: BatchScoreRequest, db: Session = Depends(database
     return BatchScoreResponse(scorecards=scorecards, failed=failed)
 
 
+@app.get("/scorecards", response_model=list[ScoreCardResponse])
+def list_scorecards_endpoint(db: Session = Depends(database.get_db), current_user: User = Depends(get_current_user)):
+    return database.list_scorecards(db, current_user.id)
+
+
 @app.get("/score/{report_id}/export")
 async def export_scorecard(report_id: str, db: Session = Depends(database.get_db), current_user: User = Depends(get_current_user)):
     scorecard = database.get_scorecard_by_report_id(db, report_id, current_user.id)
