@@ -86,6 +86,10 @@ def get_scorecard_by_report_id(db, report_id, user_id):
     return db.query(models.ScoreCard).filter(models.ScoreCard.report_id == report_id, models.ScoreCard.user_id == user_id).first()
 
 
+def list_scorecards(db, user_id):
+    return db.query(models.ScoreCard).filter(models.ScoreCard.user_id == user_id).order_by(models.ScoreCard.created_at.desc()).all()
+
+
 def create_audit_log(db, log_id, user_id, action, details):
     entry = models.AuditLog(id=log_id, user_id=user_id, action=action, details=details)
     db.add(entry)
