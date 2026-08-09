@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -19,9 +21,12 @@ database.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="E9 Lab Report Rubric Scorer")
 
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
+origins = [o.strip() for o in allowed_origins.split(",")] if allowed_origins != "*" else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -146,11 +151,6 @@ async def score_batch(payload: BatchScoreRequest, db: Session = Depends(database
     return BatchScoreResponse(scorecards=scorecards, failed=failed)
 
 
-@app.get("/scorecards", response_model=list[ScoreCardResponse])
-def list_scorecards_endpoint(db: Session = Depends(database.get_db), current_user: User = Depends(get_current_user)):
-    return database.list_scorecards(db, current_user.id)
-
-
 @app.get("/score/{report_id}/export")
 async def export_scorecard(report_id: str, db: Session = Depends(database.get_db), current_user: User = Depends(get_current_user)):
     scorecard = database.get_scorecard_by_report_id(db, report_id, current_user.id)
@@ -170,6 +170,11 @@ def get_scorecard(report_id: str, db: Session = Depends(database.get_db), curren
     if not scorecard:
         raise HTTPException(status_code=404, detail="scorecard not found")
     return scorecard
+
+
+@app.get("/scorecards", response_model=list[ScoreCardResponse])
+def list_scorecards(db: Session = Depends(database.get_db), current_user: User = Depends(get_current_user)):
+    return database.list_scorecards(db, current_user.id)
 
 
 @app.get("/audit")
